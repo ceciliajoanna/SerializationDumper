@@ -14,7 +14,7 @@ public class ClassField {
 	private final byte _typeCode;		//The field type code
 	private String _name;				//The field name
 	private String _className1;			//The className1 property (object and array type fields)
-	
+	private Object _value;
 	/*******************
 	 * Construct the ClassField object.
 	 * 
@@ -34,7 +34,7 @@ public class ClassField {
 	public byte getTypeCode() {
 		return this._typeCode;
 	}
-	
+
 	/*******************
 	 * Set the field name.
 	 * 
@@ -52,6 +52,10 @@ public class ClassField {
 	public String getName() {
 		return this._name;
 	}
+
+	public String getClassName() {
+		return this._className1;
+	}
 	
 	/*******************
 	 * Set the className1 property of the field.
@@ -60,5 +64,21 @@ public class ClassField {
 	 ******************/
 	public void setClassName1(String cn1) {
 		this._className1 = cn1;
+	}
+
+	/**
+	 * Gets the field's value assigned in the serialized object
+	 * @return
+	 */
+	public Object getValue(){
+		return this._value;
+	}
+
+	/**
+	 * Stores the field's value assigned in the serialized object
+	 * @param v the value in the serialized stream
+	 */
+	public void setValue(Object v){
+		this._value=v;
 	}
 }

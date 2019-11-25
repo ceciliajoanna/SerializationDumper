@@ -9,7 +9,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
 import nb.deser.support.ClassDataDesc;
 import nb.deser.support.ClassDetails;
 import nb.deser.support.ClassField;
@@ -38,6 +42,8 @@ public class SerializationDumper {
 	 * @throws Exception If an exception occurs.
 	 ******************/
 	public static void main(String[] args) throws Exception {
+		args = new String[]{"-r","/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-2510/payloads/beanShell.txt"};
+
 		File f;
 		FileInputStream fis;
 		SerializationDumper sd = new SerializationDumper();
@@ -99,8 +105,44 @@ public class SerializationDumper {
 		//Parse and dump the serialization stream
 		System.out.println("");
 		sd.parseStream();
+
+
+		Map<Integer, ClassDetails> refHandlers=new HashMap<>();
+
+		int index = 1;
+		for( ClassDataDesc classDesc:sd._classDataDescriptions) {
+			for(int i=0;i<classDesc.getClassCount();i++) {
+				ClassDetails classDetails = classDesc.getClassDetails(i);
+				refHandlers.put(classDetails.getHandle(),classDetails);
+				index = printClassDiagram(classDetails, index);
+			}
+		}
+		System.out.println(refHandlers);
+
 	}
-	
+
+	public static int printClassDiagram(ClassDetails rootClass, int initialIndex) {
+		int classIndex = initialIndex;
+
+		System.out.println(String.format("%d,\"%s\",styleclass,", initialIndex++, rootClass.getClassName()));
+
+		for (ClassField f : rootClass.getFields()) {
+
+
+
+				System.out.println(String.format("%d,\"%s %s %s\",%s,%d",
+						initialIndex++,
+						"+",
+						f.getClassName(),
+						f.getName(),
+						"stylefield",
+						classIndex));
+
+
+		}
+		return initialIndex;
+	}
+
 	/*******************
 	 * Construct a SerializationDumper object.
 	 ******************/
@@ -109,7 +151,7 @@ public class SerializationDumper {
 		this._indent = "";
 		this._handleValue = 0x7e0000;
 		this._classDataDescriptions = new ArrayList<ClassDataDesc>();
-		this._enablePrinting = true;
+		this._enablePrinting = false;
 	}
 	
 	/*******************
@@ -907,8 +949,8 @@ public class SerializationDumper {
 	 * Read a classdata field from the stream.
 	 * 
 	 * The data type depends on the given field description.
-	 * 
-	 * @param f A description of the field data to read.
+	 *
+	 * @param cf A description of the field data to read.
 	 ******************/
 	private void readClassDataField(ClassField cf) {
 		byte b1, b2, b3, b4, b5, b6, b7, b8;
@@ -918,7 +960,8 @@ public class SerializationDumper {
 		this.increaseIndent();
 		
 		//Read the field data
-		this.readFieldValue(cf.getTypeCode());
+		this.readFieldValue(cf);
+
 		
 		//Decrease the indent
 		this.decreaseIndent();
@@ -927,40 +970,41 @@ public class SerializationDumper {
 	/*******************
 	 * Read a field value based on the type code.
 	 * 
-	 * @param typeCode The field type code.
+	 * @param cf  field
 	 ******************/
-	private void readFieldValue(byte typeCode) {
+	private void readFieldValue(ClassField cf) {
+		byte typeCode=  cf.getTypeCode();
 		switch((char)typeCode) {
 			case 'B':		//byte
-				this.readByteField();
+				this.readByteField(cf);
 				break;
 				
 			case 'C':		//char
-				this.readCharField();
+				this.readCharField(cf);
 				break;
 				
 			case 'D':		//double
-				this.readDoubleField();
+				this.readDoubleField(cf);
 				break;
 				
 			case 'F':		//float
-				this.readFloatField();
+				this.readFloatField(cf);
 				break;
 				
 			case 'I':		//int
-				this.readIntField();
+				this.readIntField(cf);
 				break;
 				
 			case 'J':		//long
-				this.readLongField();
+				this.readLongField(cf);
 				break;
 				
 			case 'S':		//short
-				this.readShortField();
+				this.readShortField(cf);
 				break;
 				
 			case 'Z':		//boolean
-				this.readBooleanField();
+				this.readBooleanField(cf);
 				break;
 				
 			case '[':		//array
@@ -981,7 +1025,7 @@ public class SerializationDumper {
 	 * 
 	 * TC_ARRAY		classDesc	newHandle	(int)size	values[size]
 	 ******************/
-	private void readNewArray() {
+	private void readNewArray(ClassField cf) {
 		ClassDataDesc cdd;
 		ClassDetails cd;
 		byte b1, b2, b3, b4;
@@ -1347,7 +1391,7 @@ public class SerializationDumper {
 	/*******************
 	 * Read a byte field.
 	 ******************/
-	private void readByteField() {
+	private void readByteField(ClassField cf) {
 		byte b1 = this._data.pop();
 		if(((int)b1) >= 0x20 && ((int)b1) <= 0x7e) {
 			//Print with ASCII
@@ -1356,103 +1400,127 @@ public class SerializationDumper {
 			//Just print byte value
 			this.print("(byte)" + b1 + " - 0x" + this.byteToHex(b1));
 		}
+		cf.setValue(b1);
 	}
 	
 	/*******************
 	 * Read a char field.
 	 ******************/
-	private void readCharField() {
+	private void readCharField(ClassField cf) {
 		byte b1 = this._data.pop();
 		byte b2 = this._data.pop();
 		char c1 = (char)(((b1 << 8) & 0xff00) + b2 & 0xff);
 		this.print("(char)" + (char)c1 + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2));
+		cf.setValue(c1);
 	}
 	
 	/*******************
 	 * Read a double field.
 	 ******************/
-	private void readDoubleField() {
+	private void readDoubleField(ClassField cf) {
 		byte b1, b2, b3, b4, b5, b6, b7, b8;
 		b1 = this._data.pop(); b2 = this._data.pop(); b3 = this._data.pop(); b4 = this._data.pop();
 		b5 = this._data.pop(); b6 = this._data.pop(); b7 = this._data.pop(); b8 = this._data.pop();
-		this.print("(double)" + (double)(((b1 << 56) & 0xff00000000000000L) +
-										 ((b2 << 48) &   0xff000000000000L) +
-										 ((b3 << 40) &     0xff0000000000L) +
-										 ((b4 << 32) &       0xff00000000L) +
-										 ((b5 << 24) &         0xff000000 ) +
-										 ((b6 << 16) &           0xff0000 ) +
-										 ((b7 <<  8) &             0xff00 ) + 
-										 ( b8        &               0xff )) + " - 0x" + this.byteToHex(b1) +
-				   " " + this.byteToHex(b2) + " " + this.byteToHex(b3) + " " + this.byteToHex(b4) + " " + this.byteToHex(b5) + " " + this.byteToHex(b6) + " " +
-				   this.byteToHex(b7) + " " + this.byteToHex(b8));
+		double d = (double)(((b1 << 56) & 0xff00000000000000L) +
+				((b2 << 48) &   0xff000000000000L) +
+				((b3 << 40) &     0xff0000000000L) +
+				((b4 << 32) &       0xff00000000L) +
+				((b5 << 24) &         0xff000000 ) +
+				((b6 << 16) &           0xff0000 ) +
+				((b7 <<  8) &             0xff00 ) +
+				( b8        &               0xff ));
+		this.print("(double)" + d + " - 0x"
+					+ this.byteToHex(b1) + " "
+					+ this.byteToHex(b2) + " "
+					+ this.byteToHex(b3) + " "
+					+ this.byteToHex(b4) + " "
+					+ this.byteToHex(b5) + " "
+					+ this.byteToHex(b6) + " "
+					+ this.byteToHex(b7) + " "
+					+ this.byteToHex(b8));
+
+		cf.setValue(d);
 	}
 	
 	/*******************
 	 * Read a float field.
 	 ******************/
-	private void readFloatField() {
+	private void readFloatField(ClassField cf) {
 		byte b1, b2, b3, b4;
 		b1 = this._data.pop(); b2 = this._data.pop(); b3 = this._data.pop(); b4 = this._data.pop();
-		this.print("(float)" + (float)(((b1 << 24) & 0xff000000) +
-									   ((b2 << 16) &   0xff0000) +
-									   ((b3 <<  8) &     0xff00) +
-									   ( b4        &       0xff)) + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2) + " " + this.byteToHex(b3) +
+		float f = (((b1 << 24) & 0xff000000) +
+					((b2 << 16) &   0xff0000) +
+					((b3 <<  8) &     0xff00) +
+					( b4        &       0xff));
+		this.print("(float)" + f + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2) + " " + this.byteToHex(b3) +
 				   " " + this.byteToHex(b4));
+
+		cf.setValue(f);
 	}
 	
 	/*******************
 	 * Read an int field.
 	 ******************/
-	private void readIntField() {
+	private void readIntField(ClassField cf) {
 		byte b1, b2, b3, b4;
 		b1 = this._data.pop(); b2 = this._data.pop(); b3 = this._data.pop(); b4 = this._data.pop();
-		this.print("(int)" + (int)(((b1 << 24) & 0xff000000) +
-								   ((b2 << 16) &   0xff0000) +
-								   ((b3 <<  8) &     0xff00) +
-								   ( b4        &       0xff)) + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2) + " " + this.byteToHex(b3) +
+		int i = (int)(((b1 << 24) & 0xff000000) +
+				((b2 << 16) &   0xff0000) +
+				((b3 <<  8) &     0xff00) +
+				( b4        &       0xff));
+		this.print("(int)" + i + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2) + " " + this.byteToHex(b3) +
 				   " " + this.byteToHex(b4));
+
+		cf.setValue(i);
 	}
 	
 	/*******************
 	 * Read a long field.
 	 ******************/
-	private void readLongField() {
+	private void readLongField(ClassField cf) {
 		byte b1, b2, b3, b4, b5, b6, b7, b8;
 		b1 = this._data.pop(); b2 = this._data.pop(); b3 = this._data.pop(); b4 = this._data.pop();
 		b5 = this._data.pop(); b6 = this._data.pop(); b7 = this._data.pop(); b8 = this._data.pop();
-		this.print("(long)" + (long)(((b1 << 56) & 0xff00000000000000L) +
-									 ((b2 << 48) &   0xff000000000000L) +
-									 ((b3 << 40) &     0xff0000000000L) +
-									 ((b4 << 32) &       0xff00000000L) +
-									 ((b5 << 24) &         0xff000000 ) +
-									 ((b6 << 16) &           0xff0000 ) +
-									 ((b7 <<  8) &             0xff00 ) +
-									 ( b8        &               0xff)) + " - 0x" + this.byteToHex(b1) +
+		long l = (long)(((b1 << 56) & 0xff00000000000000L) +
+				((b2 << 48) &   0xff000000000000L) +
+				((b3 << 40) &     0xff0000000000L) +
+				((b4 << 32) &       0xff00000000L) +
+				((b5 << 24) &         0xff000000 ) +
+				((b6 << 16) &           0xff0000 ) +
+				((b7 <<  8) &             0xff00 ) +
+				( b8        &               0xff));
+		this.print("(long)" + l + " - 0x" + this.byteToHex(b1) +
 				   " " + this.byteToHex(b2) + " " + this.byteToHex(b3) + " " + this.byteToHex(b4) + " " + this.byteToHex(b5) + " " + this.byteToHex(b6) + " " +
 				   this.byteToHex(b7) + " " + this.byteToHex(b8));
+
+		cf.setValue(l);
 	}
 	
 	/*******************
 	 * Read a short field.
 	 ******************/
-	private void readShortField() {
+	private void readShortField(ClassField cf) {
 		byte b1, b2;
 		b1 = this._data.pop(); b2 = this._data.pop();
-		this.print("(short)" + (short)(((b1 << 8) & 0xff00) + (b2 & 0xff)) + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2));
+		short s = (short)(((b1 << 8) & 0xff00) + (b2 & 0xff));
+		this.print("(short)" + s + " - 0x" + this.byteToHex(b1) + " " + this.byteToHex(b2));
+		cf.setValue(s);
 	}
 	
 	/*******************
 	 * Read a boolean field.
 	 ******************/
-	private void readBooleanField() {
+	private void readBooleanField(ClassField cf) {
 		byte b1 = this._data.pop();
-		this.print("(boolean)" + (b1 == 0 ? "false" : "true") + " - 0x" + this.byteToHex(b1));
+		boolean b = b1 != 0;
+		this.print("(boolean)" + b + " - 0x" + this.byteToHex(b1));
+		cf.setValue(b);
 	}
 	
 	/*******************
 	 * Read an array field.
 	 ******************/
-	private void readArrayField() {
+	private void readArrayField(ClassField cf) {
 		//Print field type and increase indent
 		this.print("(array)");
 		this.increaseIndent();
@@ -1461,10 +1529,12 @@ public class SerializationDumper {
 		switch(this._data.peek()) {
 			case (byte)0x70:		//TC_NULL
 				this.readNullReference();
+				cf.setValue(null);
 				break;
 				
 			case (byte)0x75:		//TC_ARRAY
 				this.readNewArray();
+				cf.setValue(null);
 				break;
 				
 			case (byte)0x71:		//TC_REFERENCE
