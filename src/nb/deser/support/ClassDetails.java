@@ -138,4 +138,15 @@ public class ClassDetails {
 	public void setLastFieldClassName1(String cn1) {
 		this._fieldDescriptions.get(this._fieldDescriptions.size() - 1).setClassName1(cn1);
 	}
+
+	@Override
+	public int hashCode() {
+		return new Integer(_refHandle)
+				.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
 }

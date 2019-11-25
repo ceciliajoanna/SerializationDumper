@@ -147,4 +147,15 @@ public class ClassDataDesc {
 	public int getClassCount() {
 		return this._classDetails.size();
 	}
+
+
+	@Override
+	public int hashCode() {
+		return _classDetails.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
 }

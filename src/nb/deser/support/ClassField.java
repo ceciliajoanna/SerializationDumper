@@ -25,8 +25,8 @@ public class ClassField {
 		this._name = "";
 		this._className1 = "";
 	}
-	
-	/*******************
+
+    /*******************
 	 * Get the field type code.
 	 * 
 	 * @return The field type code.
