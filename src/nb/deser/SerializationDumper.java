@@ -41,7 +41,7 @@ public class SerializationDumper {
      ******************/
     public static void main(String[] args) throws Exception {
         args = new String[]{"-r", "/Users/jds5109/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-2510/payloads/beanShell.txt"};
-
+        args = new String[]{"-r", "/Users/jds5109/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-4000/payloads/jython.txt"};
         File f;
         FileInputStream fis;
         SerializationDumper sd = new SerializationDumper();
@@ -125,8 +125,6 @@ public class SerializationDumper {
         System.out.println(String.format("%d,\"%s\",styleclass,", initialIndex++, rootClass.getClassName()));
 
         for (ClassField f : rootClass.getFields()) {
-
-
             System.out.println(String.format("%d,\"%s %s %s = %s\",%s,%d",
                     initialIndex++,
                     "+",
@@ -454,11 +452,12 @@ public class SerializationDumper {
 
             case (byte) 0x74:        //TC_STRING
             case (byte) 0x7c:        //TC_LONGSTRING
-                this.readNewString();
+                String value=this.readNewString();
+                cf.setValue(value);
                 break;
 
             case (byte) 0x7e:        //TC_ENUM
-                this.readNewEnum();
+                this.readNewEnum(cf);
                 break;
 
             case (byte) 0x72:        //TC_CLASSDESC
@@ -472,6 +471,7 @@ public class SerializationDumper {
 
             case (byte) 0x70:        //TC_NULL
                 this.readNullReference();
+                cf.setValue(null);
                 break;
 
 //			case (byte)0x7b:		//TC_EXCEPTION
@@ -501,7 +501,7 @@ public class SerializationDumper {
      *
      * TC_ENUM		classDesc	newHandle	enumConstantName
      ******************/
-    private void readNewEnum() {
+    private void readNewEnum(ClassField cf) {
         byte b1;
 
         //TC_ENUM
@@ -521,7 +521,8 @@ public class SerializationDumper {
         this.newHandle();
 
         //enumConstantName
-        this.readNewString();
+        String enumConstantName=this.readNewString();
+        cf.setValue(enumConstantName);
 
         //Decrease indent
         this.decreaseIndent();
@@ -1699,6 +1700,10 @@ public class SerializationDumper {
 
             case (byte) 0x75:        //TC_ARRAY
                 this.readNewArray(cf);
+                break;
+
+            case (byte) 0x7e:        //TC_ENUM
+                this.readNewEnum(cf);
                 break;
 
             default:                //Unknown/unsupported
