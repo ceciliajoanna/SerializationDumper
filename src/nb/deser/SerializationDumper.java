@@ -41,7 +41,9 @@ public class SerializationDumper {
      ******************/
     public static void main(String[] args) throws Exception {
         args = new String[]{"-r", "/Users/jds5109/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-2510/payloads/beanShell.txt"};
-        args = new String[]{"-r", "/Users/jds5109/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-4000/payloads/jython.txt"};
+        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-4000/payloads/jython.txt"};
+        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/C3P0/payloads/c3p0.txt"};
+        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/Clojure/payloads/clojure.txt"};
         File f;
         FileInputStream fis;
         SerializationDumper sd = new SerializationDumper();
@@ -117,26 +119,9 @@ public class SerializationDumper {
 //		}
 //		System.out.println(refHandlers);
         printDeserializedObjectAsJson(sd._classDataDescriptions.get(0).getClassDetails(0));
+//        System.out.println(sd._classDataDescriptions.get(0).getClassDetails(0));
     }
 
-    public static int printClassDiagram(ClassDetails rootClass, int initialIndex) {
-        int classIndex = initialIndex;
-
-        System.out.println(String.format("%d,\"%s\",styleclass,", initialIndex++, rootClass.getClassName()));
-
-        for (ClassField f : rootClass.getFields()) {
-            System.out.println(String.format("%d,\"%s %s %s = %s\",%s,%d",
-                    initialIndex++,
-                    "+",
-                    f.getClassName(),
-                    f.getName(), Objects.toString(f.getValue()),
-                    "stylefield",
-                    classIndex));
-
-
-        }
-        return initialIndex;
-    }
 
 
     static Set<ClassDetails> visited = new HashSet<>();
@@ -157,10 +142,8 @@ public class SerializationDumper {
 
         for (int i = 0; i < allFields.size(); i++) {
             ClassField f = allFields.get(i);
-
-
             Object fieldValue = f.getValue();
-
+            if(fieldValue==null) continue;
             if (fieldValue instanceof ClassDataDesc == false) {
                 System.out.print(String.format("%s\"%s %s\":\"%s\"",
                         CURRENT_INDENT + INDENT_SPACE,
@@ -170,6 +153,24 @@ public class SerializationDumper {
                 ));
                 if (i < allFields.size() - 1)
                     System.out.println(",");
+            } else if(fieldValue.getClass().isArray()){
+                ClassDataDesc [] classDataDescs = (ClassDataDesc[]) fieldValue;
+                int currentIndex = 0;
+                for(ClassDataDesc cdd:classDataDescs){
+                    System.out.print(String.format("%s\"%s %s[%d]\":",
+                            CURRENT_INDENT + INDENT_SPACE,
+                            f.getClassName(),
+                            f.getName(),
+                            currentIndex++
+                    ));
+                    String previousIndent = CURRENT_INDENT;
+                    CURRENT_INDENT += INDENT_SPACE;
+                    printDeserializedObjectAsJson(cdd.getClassDetails(0));
+                    CURRENT_INDENT = previousIndent;
+                    if (i < allFields.size() - 1)
+                        System.out.println(",");
+                }
+
             } else {
                 ClassDataDesc cdd = (ClassDataDesc) fieldValue;
                 if (fieldValue != null && cdd.getClassCount() > 0 && !visited.contains(cdd.getClassDetails(0))) {
@@ -1165,7 +1166,8 @@ public class SerializationDumper {
         }
         this.decreaseIndent();
 
-        cf.setValue(String.format("=%s[%d]{%s}", cd.getClassName(), size, Arrays.toString(arrayValue)));
+//        cf.setValue(String.format("=%s[%d]{%s}", cd.getClassName(), size, Arrays.toString(arrayValue)));
+        cf.setValue(arrayValue);
         //Revert indent
         this.decreaseIndent();
     }
