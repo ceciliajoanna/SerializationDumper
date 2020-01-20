@@ -28,52 +28,52 @@ TC_PROXYCLASSDESC: '\u007D';
 TC_ENUM: '\u007E';
 baseWireHandle:   '\u0000' '\u007E' '\u0000' '\u0000';
 
-stream:
-  magic version contents;
-
-contents:
-  | content
-  | contents content;
-
- content:
-  | object
-  | blockdata;
-
- object:
-  | newObject
-  | newClass
-  | newArray
-  | newString
-  | newEnum
-  | newClassDesc
-  | prevObject
-  | nullReference
-  | exception
-  | TC_RESET;
-
- newClass:
-  TC_CLASS classDesc newHandle;
-
- classDesc:
-  | newClassDesc
-  | nullReference
-  | (ClassDesc)prevObject;      // an object required to be of type
-                             // ClassDesc
-
- superClassDesc:
-  classDesc;
-
- newClassDesc:
-  | TC_CLASSDESC className serialVersionUID newHandle classDescInfo
-  | TC_PROXYCLASSDESC newHandle proxyClassDescInfo;
- classDescInfo:
-  classDescFlags fields classAnnotation superClassDesc;
-
- className:
-  STRING_LITERAL;
-
- serialVersionUID:
-  DECIMAL_LITERAL;
+//stream:
+//  magic version contents;
+//
+//contents:
+//  | content
+//  | contents content;
+//
+// content:
+//  | object
+//  | blockdata;
+//
+// object:
+//  | newObject
+//  | newClass
+//  | newArray
+//  | newString
+//  | newEnum
+//  | newClassDesc
+//  | prevObject
+//  | nullReference
+//  | exception
+//  | TC_RESET;
+//
+// newClass:
+//  TC_CLASS classDesc newHandle;
+//
+// classDesc:
+//  | newClassDesc
+//  | nullReference
+//  | (ClassDesc)prevObject;      // an object required to be of type
+//                             // ClassDesc
+//
+// superClassDesc:
+//  classDesc;
+//
+// newClassDesc:
+//  | TC_CLASSDESC className serialVersionUID newHandle classDescInfo
+//  | TC_PROXYCLASSDESC newHandle proxyClassDescInfo;
+// classDescInfo:
+//  classDescFlags fields classAnnotation superClassDesc;
+//
+// className:
+//  STRING_LITERAL;
+//
+// serialVersionUID:
+//  DECIMAL_LITERAL;
 //
 // classDescFlags:
 //  (byte)                  // Defined in Terminal Symbols and
@@ -186,11 +186,11 @@ contents:
 // exception:
 //  TC_EXCEPTION reset (Throwable)object         reset
 //
-magic:
-  STREAM_MAGIC;
-
- version:
-  STREAM_VERSION;
+//magic:
+//  STREAM_MAGIC;
+//
+// version:
+//  STREAM_VERSION;
 //
 //
 // values:          // The size and types are described by the
@@ -205,12 +205,4 @@ magic:
 //                 // or with objects that may be sent after
 //                 // the exception
 //
-//// TESTE OF GRAMMAR
-//
-////file : ip+ (MARKER ip)* ;
-////
-////ip : BYTE BYTE BYTE BYTE ;
-////
-////MARKER : '\u00CA' '\u00FE' ;
-////BYTE : '\u0000'..'\u00FF' ;
-//
+

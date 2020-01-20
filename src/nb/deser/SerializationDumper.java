@@ -39,11 +39,13 @@ public class SerializationDumper {
      * @param args Command line parameters.
      * @throws Exception If an exception occurs.
      ******************/
+    //
     public static void main(String[] args) throws Exception {
-        args = new String[]{"-r", "/Users/jds5109/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-2510/payloads/beanShell.txt"};
-        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-4000/payloads/jython.txt"};
-        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/C3P0/payloads/c3p0.txt"};
-        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/Clojure/payloads/clojure.txt"};
+//        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-2510/payloads/beanShell.txt"};
+//        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-4000/payloads/jython.txt"};
+//        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/C3P0/payloads/c3p0.txt"};
+//        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/Clojure/payloads/clojure.txt"};
+        args = new String[]{"-r", "/Users/joanna/Google Drive/Research Assistant/Projects/Weaknesses/DODO-Data/Data/ysoserial/CVE-2016-1000031/payloads/write.txt"};
         File f;
         FileInputStream fis;
         SerializationDumper sd = new SerializationDumper();
@@ -123,7 +125,6 @@ public class SerializationDumper {
     }
 
 
-
     static Set<ClassDetails> visited = new HashSet<>();
     static String INDENT_SPACE = "\t";
     static String CURRENT_INDENT = "";
@@ -143,7 +144,7 @@ public class SerializationDumper {
         for (int i = 0; i < allFields.size(); i++) {
             ClassField f = allFields.get(i);
             Object fieldValue = f.getValue();
-            if(fieldValue==null) continue;
+            if (fieldValue == null) continue;
             if (fieldValue instanceof ClassDataDesc == false) {
                 System.out.print(String.format("%s\"%s %s\":\"%s\"",
                         CURRENT_INDENT + INDENT_SPACE,
@@ -153,10 +154,10 @@ public class SerializationDumper {
                 ));
                 if (i < allFields.size() - 1)
                     System.out.println(",");
-            } else if(fieldValue.getClass().isArray()){
-                ClassDataDesc [] classDataDescs = (ClassDataDesc[]) fieldValue;
+            } else if (fieldValue.getClass().isArray()) {
+                ClassDataDesc[] classDataDescs = (ClassDataDesc[]) fieldValue;
                 int currentIndex = 0;
-                for(ClassDataDesc cdd:classDataDescs){
+                for (ClassDataDesc cdd : classDataDescs) {
                     System.out.print(String.format("%s\"%s %s[%d]\":",
                             CURRENT_INDENT + INDENT_SPACE,
                             f.getClassName(),
@@ -181,7 +182,7 @@ public class SerializationDumper {
                     ));
                     String previousIndent = CURRENT_INDENT;
                     CURRENT_INDENT += INDENT_SPACE;
-					printDeserializedObjectAsJson(cdd.getClassDetails(0));
+                    printDeserializedObjectAsJson(cdd.getClassDetails(0));
                     CURRENT_INDENT = previousIndent;
                     if (i < allFields.size() - 1)
                         System.out.println(",");
@@ -453,7 +454,7 @@ public class SerializationDumper {
 
             case (byte) 0x74:        //TC_STRING
             case (byte) 0x7c:        //TC_LONGSTRING
-                String value=this.readNewString();
+                String value = this.readNewString();
                 cf.setValue(value);
                 break;
 
@@ -522,7 +523,7 @@ public class SerializationDumper {
         this.newHandle();
 
         //enumConstantName
-        String enumConstantName=this.readNewString();
+        String enumConstantName = this.readNewString();
         cf.setValue(enumConstantName);
 
         //Decrease indent
